@@ -74,6 +74,10 @@ class FieldDict(FieldList):
 class SelectObjectField(SelectField):
     """Automatically present a list of objects in a WTForms `SelectField`.
 
+    >>> myoptions = [MyOption(pk=44, name='Option 44')]
+    >>> options = SelectObjectField('My Options', choices=myoptions,
+                                    idprop='pk', labelprop='name')
+
     :param choices:
         List of objects to display.
     :param idprop:
