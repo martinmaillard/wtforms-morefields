@@ -30,8 +30,11 @@ WTForms. For now, it only contains:
         myselect = SelectObjectField('Options', choices=a_list_of_objects,
                                      idprop='id', labelprop='name')
 
-## TODO
 
-I'm still not sure how to manage the labels of the fields.
+## Notes
+
+In `FieldDict`, the `dict` keys are used as labels for the generated
+fields. It suits my use case, but I'm not sure this is the best way
+to do it.
 
 

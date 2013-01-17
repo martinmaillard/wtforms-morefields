@@ -8,6 +8,9 @@ class FieldDict(FieldList):
     """Acts just like a FieldList, but works with a `dict` instead of
     a `list`.
 
+    The `keys` of the `dict` are used as labels for the generated
+    fields.
+
     Warning: the character '-' must not be used in the `keys` of the
     `dict` because it is already used to separate the parts of the
     names/ids of the form fields. This should be configurable but
@@ -64,7 +67,7 @@ class FieldDict(FieldList):
         name = '{}-{}'.format(self.short_name, new_index)
         id = '{}-{}'.format(self.id, new_index)
 
-        field = self.unbound_field.bind(form=None, name=name,
+        field = self.unbound_field.bind(label=new_index, form=None, name=name,
                                         prefix=self._prefix, id=id)
         field.process(formdata, actual_data)
         self.entries.append(field)
