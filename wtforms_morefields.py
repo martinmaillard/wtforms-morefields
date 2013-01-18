@@ -76,20 +76,16 @@ class FieldDict(FieldList):
         return self._add_entry(data=data)
 
     def populate_obj(self, obj, name):
-        values = getattr(obj, name, None).values()
-        try:
-            ivalues = iter(values)
-        except TypeError:
-            ivalues = iter([])
-
-        candidates = itertools.chain(ivalues, itertools.repeat(None))
+        dic = getattr(obj, name, {})
         _fake = type(str('_fake'), (object, ), {})
         output = {}
-        for field, data in izip(self.entries, candidates):
+
+        for field in self.entries:
+            id = self._extract_entry_id(field)
             fake_obj = _fake()
-            fake_obj.data = data
+            fake_obj.data = dic.get(id, None)
             field.populate_obj(fake_obj, 'data')
-            output[self._extract_entry_id(field)] = fake_obj.data
+            output[id] = fake_obj.data
 
         setattr(obj, name, output)
 
