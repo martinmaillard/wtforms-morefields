@@ -1,12 +1,16 @@
 """Custom fields for the WTForms library."""
 
+import itertools
+
 from wtforms import FieldList, SelectField
 from wtforms.fields import _unset_value
+from wtforms.compat import izip
 
 
 class FieldDict(FieldList):
     """Acts just like a FieldList, but works with a `dict` instead of
-    a `list`.
+    a `list`. Also, it wouldn't make sense to have `min_entries` and
+    `max_entries` params, so they are not provided.
 
     The `keys` of the `dict` are used as labels for the generated
     fields.
@@ -17,10 +21,10 @@ class FieldDict(FieldList):
     it would require a lot of changes in WTForms.
     """
     def __init__(self, unbound_field, label=None, validators=None,
-                 min_entries=0, max_entries=None, default=dict, **kwargs):
+                 default=dict, **kwargs):
         super(FieldDict, self).__init__(unbound_field, label,
-                    validators, min_entries=min_entries,
-                    max_entries=max_entries, default=default, **kwargs)
+                    validators, min_entries=0, max_entries=None,
+                    default=default, **kwargs)
 
     def process(self, formdata, data=_unset_value):
 
@@ -35,22 +39,17 @@ class FieldDict(FieldList):
 
         if formdata:
             indices = sorted(set(self._extract_indices(self.name, formdata)))
-            if self.max_entries:
-                indices = indices[:self.max_entries]
 
-            idata = iter(data.items())
             for index in indices:
                 try:
-                    obj_data = next(idata)
-                except StopIteration:
+                    obj_data = data[index]
+                except KeyError:
                     obj_data = _unset_value
                 self._add_entry(formdata, obj_data, index=index)
         else:
-            for obj_data in data.items():
-                self._add_entry(formdata, obj_data)
+            for index, obj_data in data.items():
+                self._add_entry(formdata, obj_data, index)
 
-        while len(self.entries) < self.min_entries:
-            self._add_entry(formdata)
 
     def _extract_indices(self, prefix, formdata):
         offset = len(prefix) + 1
@@ -60,18 +59,47 @@ class FieldDict(FieldList):
                 yield k
 
     def _add_entry(self, formdata=None, data=_unset_value, index=None):
-        assert not self.max_entries or len(self.entries) < self.max_entries, \
-            'You cannot have more than max_entries entries in this FieldList'
-        new_index, actual_data = data
+        name = '{}-{}'.format(self.short_name, index)
+        id = '{}-{}'.format(self.id, index)
 
-        name = '{}-{}'.format(self.short_name, new_index)
-        id = '{}-{}'.format(self.id, new_index)
-
-        field = self.unbound_field.bind(label=new_index, form=None, name=name,
+        field = self.unbound_field.bind(label=index, form=None, name=name,
                                         prefix=self._prefix, id=id)
-        field.process(formdata, actual_data)
+        field.process(formdata, data)
         self.entries.append(field)
         return field
+
+    def append_entry(self, data=None):
+        if not data:
+            raise TypeError('To add an entry to a FieldDict, you must at ' \
+                            'least provide a valid `dict`, containing at ' \
+                            'least one key.')
+        return self._add_entry(data=data)
+
+    def populate_obj(self, obj, name):
+        values = getattr(obj, name, None).values()
+        try:
+            ivalues = iter(values)
+        except TypeError:
+            ivalues = iter([])
+
+        candidates = itertools.chain(ivalues, itertools.repeat(None))
+        _fake = type(str('_fake'), (object, ), {})
+        output = {}
+        for field, data in izip(self.entries, candidates):
+            fake_obj = _fake()
+            fake_obj.data = data
+            field.populate_obj(fake_obj, 'data')
+            output[self._extract_entry_id(field)] = fake_obj.data
+
+        setattr(obj, name, output)
+
+    @property
+    def data(self):
+        return {self._extract_entry_id(e): e.data for e in self.entries}
+
+    def _extract_entry_id(self, entry):
+        offset = len(self.id) + 1
+        return entry.id[offset:]
 
 
 class SelectObjectField(SelectField):
