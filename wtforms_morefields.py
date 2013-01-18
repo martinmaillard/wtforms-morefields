@@ -102,16 +102,13 @@ class SelectObjectField(SelectField):
             yield (key, label, selected)
 
     def process_data(self, obj):
-        try:
-            self.data = obj
-        except (ValueError, TypeError):
-            self.data = None
+        self.data = obj
 
     def process_formdata(self, keylist):
         if keylist:
             try:
                 self.data = self.choices[keylist[0]]
-            except ValueError:
+            except KeyError:
                 raise ValueError(self.gettext(u'Invalid Choice: could \
                                  not find the object.'))
 
