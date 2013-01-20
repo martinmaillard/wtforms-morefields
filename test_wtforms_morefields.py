@@ -4,7 +4,7 @@ from unittest import TestCase
 from wtforms.fields import FieldList, TextField, FormField
 from wtforms.form import Form
 from wtforms import validators
-from nomad.webapi.wtforms_morefields import FieldDict
+from wtforms_morefields import FieldDict
 
 
 class DummyPostData(dict):
