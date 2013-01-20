@@ -1,7 +1,7 @@
 
 from unittest import TestCase
 
-from wtforms.fields import FieldList, TextField, FormField
+from wtforms.fields import TextField, FormField
 from wtforms.form import Form
 from wtforms import validators
 from wtforms_morefields import FieldDict

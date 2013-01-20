@@ -50,7 +50,6 @@ class FieldDict(FieldList):
             for index, obj_data in data.items():
                 self._add_entry(formdata, obj_data, index)
 
-
     def _extract_indices(self, prefix, formdata):
         offset = len(prefix) + 1
         for k in formdata:
