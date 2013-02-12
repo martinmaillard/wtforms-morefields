@@ -77,23 +77,20 @@ class FieldDict(FieldList):
     def populate_obj(self, obj, name):
         dic = getattr(obj, name, {})
         _fake = type(str('_fake'), (object, ), {})
-        output = {}
 
         for field in self.entries:
             id = self._extract_entry_id(field)
             fake_obj = _fake()
             fake_obj.data = dic.get(id, None)
             field.populate_obj(fake_obj, 'data')
-            output[id] = fake_obj.data
-
-        setattr(obj, name, output)
+            dic[id] = fake_obj.data
 
     @property
     def data(self):
         return {self._extract_entry_id(e): e.data for e in self.entries}
 
     def _extract_entry_id(self, entry):
-        offset = len(self.id) + 1
+        offset = len(self.name) + 1
         return entry.id[offset:]
 
 

@@ -60,7 +60,8 @@ class TestFieldDict(TestCase):
     def test_enclosed_subform(self):
         make_inner = lambda: AttrDict(a=None)
         F = make_form(
-            a=FieldDict(FormField(make_form('FChild', a=self.t), default=make_inner))
+            a=FieldDict(FormField(make_form('FChild', a=self.t),
+                                  default=make_inner))
         )
         data = {'stuff': {'a': 'hella'}}
         form = F(a=data)
@@ -70,7 +71,9 @@ class TestFieldDict(TestCase):
         self.assertRaises(TypeError, form.a.append_entry)
         self.assertRaises(TypeError, form.a.append_entry, {})
 
-        pdata = DummyPostData({'a-0': ['fake'], 'a-0-a': ['foo'], 'a-1-a': ['bar']})
+        pdata = DummyPostData({'a-0': ['fake'],
+                               'a-0-a': ['foo'],
+                               'a-1-a': ['bar']})
         form = F(pdata, a=data)
         self.assertEqual(form.a.data, {'0': {'a': 'foo'}, '1': {'a': 'bar'}})
 
@@ -78,7 +81,6 @@ class TestFieldDict(TestCase):
         inner_dict = {'0': inner_obj}
         obj = AttrDict(a=inner_dict)
         form.populate_obj(obj)
-        self.assertTrue(obj.a is not inner_dict)
         self.assertEqual(len(obj.a), 2)
         self.assertTrue(obj.a['0'] is inner_obj)
         self.assertEqual(obj.a['0'].a, 'foo')
