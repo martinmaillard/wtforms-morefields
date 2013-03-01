@@ -51,6 +51,7 @@ class FieldDict(FieldList):
                 except KeyError:
                     obj_data = _unset_value
                 self._add_entry(formdata, obj_data, index=index)
+
         else:
             for index, obj_data in data.items():
                 self._add_entry(formdata, obj_data, index)
@@ -164,3 +165,30 @@ class PersistentBooleanField(BooleanField):
         # store the default data accordingly.
         else:
             self.data = False
+
+
+class DynamicSelectField(SelectField):
+    """Variant of `SelectField` that takes a function that generates
+    the choices instead of directly taking the list.
+
+    Also it does not check that the selected choice is actually in the
+    list when validating the form. The use case for this is to
+    dynamically add new values by replacing the `select` field by an
+    `input[type=text]` field.
+    """
+    def __init__(self, label=None, validators=None, choices=lambda: None,
+                 **kwargs):
+        super(DynamicSelectField, self).__init__(label, validators, **kwargs)
+        self.choices_function = choices
+
+    def get_choices(self):
+        return self.choices_function()
+
+    def set_choices(self, _):
+        pass
+
+    choices = property(get_choices, set_choices)
+
+    def pre_validate(self, form):
+        """Don't check if the choice is valid."""
+        pass
