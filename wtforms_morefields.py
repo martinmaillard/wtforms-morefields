@@ -2,7 +2,7 @@
 
 import itertools
 
-from wtforms import FieldList, SelectField
+from wtforms import FieldList, SelectField, BooleanField
 from wtforms.fields import _unset_value
 from wtforms.compat import izip
 
@@ -38,7 +38,12 @@ class FieldDict(FieldList):
         self.object_data = data
 
         if formdata:
-            indices = sorted(set(self._extract_indices(self.name, formdata)))
+            # Union with data.keys() because unchecked checkboxes are
+            # not sent in the request. If we only take indices in the
+            # formdata, unchecked checkboxes will simply not be present
+            # in the resulting form.
+            indices = sorted(set(self._extract_indices(self.name, formdata)) |
+                             set(data.keys()))
 
             for index in indices:
                 try:
@@ -138,3 +143,24 @@ class SelectObjectField(SelectField):
                 break
         else:
             raise ValueError(self.gettext(u'Not a valid choice'))
+
+
+class PersistentBooleanField(BooleanField):
+    """This is a variant of BooleanField meant to overcome the problem
+    of unchecked checkboxes not being sent in the request.
+
+    The default behaviour of browsers is to ignore checkboxes that are
+    not checked and to send only the checked ones. The problems is
+    that when we try to merge the data from the incoming form and the
+    data from the original object, these fields are ignored and not
+    added to the resulting form.
+    """
+
+    def process_formdata(self, valuelist):
+        if valuelist:
+            self.data = valuelist[0]
+        # If we get here, that means a form was submitted but didn't
+        # contain this field. We assume this checkbox was unchecked and
+        # store the default data accordingly.
+        else:
+            self.data = False
